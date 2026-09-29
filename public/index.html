@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpeakScore – English Proficiency Evaluator</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 2a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" fill="white"/>
+            <path d="M5 12a6 6 0 0 0 12 0" stroke="white" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+            <line x1="11" y1="18" x2="11" y2="21" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="8" y1="21" x2="14" y2="21" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">SpeakScore</span>
+      </div>
+      <span class="header-pill">AI English Assessment</span>
+    </div>
+  </header>
+
+  <main class="container main">
+
+    <!-- ── Recorder Panel ── -->
+    <section class="card" id="recorderPanel">
+
+      <div class="hero">
+        <h1>Evaluate Your English</h1>
+        <p>Speak naturally for up to <strong>1.5 minutes</strong>. Our AI scores your pronunciation, fluency, grammar, and clarity.</p>
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="tabs">
+        <button class="tab active" id="tabRecord" onclick="switchMode('record')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="3" fill="currentColor"/>
+            <path d="M3 9a5 5 0 0 0 10 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <line x1="8" y1="14" x2="8" y2="11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Record Voice
+        </button>
+        <button class="tab" id="tabUpload" onclick="switchMode('upload')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v8M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Upload File
+        </button>
+      </div>
+
+      <!-- Record Mode -->
+      <div id="recordMode">
+
+        <div class="waveform-wrap">
+          <canvas id="waveform" width="700" height="80"></canvas>
+          <div class="waveform-idle" id="waveformPlaceholder">
+            <div class="idle-bars">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p>Waveform appears when recording</p>
+          </div>
+        </div>
+
+        <div class="timer-row">
+          <span class="timer" id="timer">0:00</span>
+          <span class="timer-sep">/</span>
+          <span class="timer-max">1:30</span>
+        </div>
+
+        <div class="duration-track" id="progressBarWrap" style="display:none">
+          <div class="duration-fill" id="progressBarFill"></div>
+        </div>
+
+        <div class="record-wrap">
+          <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
+            <span id="recordIcon">
+              <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                <circle cx="13" cy="13" r="7" fill="white"/>
+              </svg>
+            </span>
+          </button>
+          <div class="record-label" id="recordBtnText">Tap to Record</div>
+        </div>
+
+        <p class="hint" id="hint">Click the button above and allow microphone access to start.</p>
+      </div>
+
+      <!-- Upload Mode -->
+      <div id="uploadMode" style="display:none">
+        <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileSelect(event)"/>
+
+        <div class="dropzone" id="dropzone"
+             onclick="document.getElementById('fileInput').click()"
+             ondragover="onDragOver(event)"
+             ondragleave="onDragLeave(event)"
+             ondrop="onDrop(event)">
+          <div class="dropzone-icon">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              <path d="M15 4v18M9 10l6-6 6 6" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 23v2a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="dropzone-title">Drop audio file here</p>
+          <p class="dropzone-sub">or click to browse</p>
+          <span class="dropzone-formats">MP3 · WAV · M4A · OGG · WebM · max 50 MB</span>
+        </div>
+
+        <div class="file-row" id="fileInfo" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6z" fill="rgba(99,102,241,0.15)" stroke="#6366f1" stroke-width="1.3"/>
+            <path d="M12 2v6h5" stroke="#6366f1" stroke-width="1.3"/>
+          </svg>
+          <div class="file-info-text">
+            <span class="file-name" id="fileName"></span>
+            <span class="file-size" id="fileSize"></span>
+          </div>
+          <button class="file-remove" onclick="clearFile()">✕</button>
+        </div>
+
+        <button class="submit-btn" id="uploadBtn" onclick="submitUpload()" disabled>
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/>
+            <polygon points="7.5,6 13,9 7.5,12" fill="currentColor"/>
+          </svg>
+          Analyze This File
+        </button>
+
+        <p class="hint">Accepted: MP3, WAV, M4A, OGG, WebM (max 50 MB)</p>
+      </div>
+
+    </section>
+
+    <!-- ── Results Panel ── -->
+    <section class="card" id="resultsPanel" style="display:none">
+
+      <!-- Loading -->
+      <div class="loading-wrap" id="loadingState">
+        <div class="loading-ring"></div>
+        <h3 class="loading-title">Analyzing your speech…</h3>
+        <div class="loading-steps">
+          <div class="loading-step active" id="step1"><div class="step-dot"></div><span>Converting &amp; processing audio</span></div>
+          <div class="loading-step" id="step2"><div class="step-dot"></div><span>Azure pronunciation assessment</span></div>
+          <div class="loading-step" id="step3"><div class="step-dot"></div><span>Evaluating grammar &amp; vocabulary</span></div>
+          <div class="loading-step" id="step4"><div class="step-dot"></div><span>Generating your report</span></div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsContent" style="display:none">
+
+        <!-- CEFR -->
+        <div class="cefr-block">
+          <div class="cefr-left">
+            <div class="cefr-eyebrow">Your CEFR Level</div>
+            <div class="cefr-badge" id="cefrBadge">--</div>
+          </div>
+          <p class="cefr-summary" id="cefrSummary"></p>
+        </div>
+
+        <!-- Scores -->
+        <div class="section">
+          <h3 class="section-label">Score Breakdown</h3>
+          <div class="score-list">
+
+            <div class="score-row">
+              <div class="score-icon i-pronunciation">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="7" r="3" fill="currentColor"/>
+                  <path d="M3.5 11a5.5 5.5 0 0 0 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                  <line x1="9" y1="16.5" x2="9" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="score-body">
+                <div class="score-meta">
+                  <span class="score-name">Pronunciation</span>
+                  <span class="score-val" id="valPronunciation">0</span>
+                </div>
+                <div class="score-track"><div class="score-fill fill-pronunciation" id="barPronunciation"></div></div>
+              </div>
+            </div>
+
+            <div class="score-row">
+              <div class="score-icon i-fluency">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <path d="M2 9h3l2-5 4 10 2-5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+              </div>
+              <div class="score-body">
+                <div class="score-meta">
+                  <span class="score-name">Fluency</span>
+                  <span class="score-val" id="valFluency">0</span>
+                </div>
+                <div class="score-track"><div class="score-fill fill-fluency" id="barFluency"></div></div>
+              </div>
+            </div>
+
+            <div class="score-row">
+              <div class="score-icon i-clarity">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M6.5 9l2 2 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="score-body">
+                <div class="score-meta">
+                  <span class="score-name">Clarity</span>
+                  <span class="score-val" id="valAccuracy">0</span>
+                </div>
+                <div class="score-track"><div class="score-fill fill-clarity" id="barAccuracy"></div></div>
+              </div>
+            </div>
+
+            <div class="score-row">
+              <div class="score-icon i-grammar">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 5h12M3 9h8M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="score-body">
+                <div class="score-meta">
+                  <span class="score-name">Grammar</span>
+                  <span class="score-val" id="valGrammar">0</span>
+                </div>
+                <div class="score-track"><div class="score-fill fill-grammar" id="barGrammar"></div></div>
+              </div>
+            </div>
+
+            <div class="score-row">
+              <div class="score-icon i-vocabulary">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <path d="M6 7h6M6 10.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="score-body">
+                <div class="score-meta">
+                  <span class="score-name">Vocabulary</span>
+                  <span class="score-val" id="valVocabulary">0</span>
+                </div>
+                <div class="score-track"><div class="score-fill fill-vocabulary" id="barVocabulary"></div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Transcript -->
+        <div class="section">
+          <h3 class="section-label">Transcript</h3>
+          <div class="transcript-card">
+            <p id="transcriptText" class="transcript-body"></p>
+            <div class="legend">
+              <span class="legend-item"><span class="ldot good"></span>Excellent (80–100)</span>
+              <span class="legend-item"><span class="ldot fair"></span>Fair (55–79)</span>
+              <span class="legend-item"><span class="ldot poor"></span>Needs work (0–54)</span>
+              <span class="legend-item"><span class="ldot err"></span>Error</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="section">
+          <h3 class="section-label">Detailed Feedback</h3>
+          <div class="feedback-grid">
+            <div class="feedback-card f-grammar">
+              <div class="feedback-head">
+                <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 5h12M3 9h8M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Grammar
+              </div>
+              <p id="grammarFeedback"></p>
+            </div>
+            <div class="feedback-card f-vocabulary">
+              <div class="feedback-head">
+                <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <path d="M6 7h6M6 10.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Vocabulary
+              </div>
+              <p id="vocabularyFeedback"></p>
+            </div>
+          </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetUI()">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M2 12V8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Evaluate Again
+        </button>
+
+      </div>
+    </section>
+
+    <!-- Error -->
+    <div class="error-bar" id="errorBox" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 6v5M10 14v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span id="errorMsg"></span>
+      <button onclick="resetUI()">Try Again</button>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
